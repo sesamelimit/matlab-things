@@ -1,0 +1,88 @@
+syms t;
+f(t)=1+2*sin(t+pi/3)+5*sin(2*t);
+A=[-13.5,-12.5,-43;
+    5.2,4.2,17.8;
+    2.1,2.1,6.4];
+B=[1;0;0];
+K=[12.5;-4.5;-2.5];
+m_1=-1.11;
+m_2=5.30;
+X_1=[-5.36;4.62;2.52];
+X_2=[-28.57;4.46;0.77];
+
+relay_f(A,B,K,m_1,m_2,f(t),X_1,X_2,2,0);
+ 
+
+function [] = relay_f( A,B,K,m_1,m_2,f,X_1,X_2,cycle_n,t_0)
+syms x_1(t) x_2(t) x_3(t);
+X=[x_1;x_2;x_3];
+%calculate S
+S=[-5,-1,7;
+    2,1,-3;
+    1,0,-1;];
+
+
+A_0=S\A*S;
+B_0=S\B;
+K_0=S\K;
+odes1=diff(X)==A_0*X + B_0*m_1+K_0*f;
+odes2=diff(X)==A_0*X + B_0*m_2+K_0*f;
+switch_pts=zeros(2,cycle_n+1);
+switch_pts(1,1)=t_0;
+figure(1)
+plot3(X_1(1),X_1(2),X_1(3),'-o','Color','k','MarkerSize',6,'MarkerFaceColor','#709494');    
+grid on
+axis square
+hold on
+
+plot3(X_2(1),X_2(2),X_2(3),'-o','Color','k','MarkerSize',6,'MarkerFaceColor','#709494');
+[Ys,Zs] = meshgrid(-1:0.2:7,-3:0.2:3);
+Xs2=-28.57+0*Ys+0*Zs;
+surf(Xs2,Ys,Zs, 'LineStyle', ':')
+Xs=-5.36+0*Ys+0*Zs;
+surf(Xs,Ys,Zs, 'LineStyle', ':')
+colormap(white)
+title('Решение ОДУ dY==A_0*Y+B_0*m_i+K_0*f(t)')
+xlabel('x') 
+ylabel('y') 
+zlabel('z')
+
+for i=1:(cycle_n)
+    [u1(t),u2(t),u3(t)]=dsolve(odes1,X(switch_pts(1,i))==X_1);
+    temp=vpasolve(u1(t)==X_2(1),t,[switch_pts(1,i) Inf]);
+    %заменить 1е-10 на точность todo
+    while true
+        switch_pts(2,i)=temp;
+        temp=vpasolve(u1(t)==X_2(1),t, [switch_pts(1,i) switch_pts(2,i)-(1e-10)]);
+        if isempty(temp) 
+           break;
+       end
+    end
+    figure(1);fplot3(u1,u2,u3,[switch_pts(1,i) switch_pts(2,i)],'Color','k','LineWidth',1);
+    figure(2); hold on ;fplot(u1,[switch_pts(1,i) switch_pts(2,i)],'Color','k','LineWidth',1);
+    line(X_2(1),[switch_pts(1,i) switch_pts(2,i)]);line(X_1(1),[switch_pts(1,i) switch_pts(2,i)]);
+    plot(switch_pts(1,i),X_1(1),'-o','Color','k','MarkerSize',6,'MarkerFaceColor','#709494');
+    plot(switch_pts(2,i),X_2(1),'-o','Color','k','MarkerSize',6,'MarkerFaceColor','#709494');
+    hold off;
+       
+    [v1(t),v2(t),v3(t)]=dsolve(odes2,X(switch_pts(2,i))==X_2);
+        temp=vpasolve(v1==X_1(1),[switch_pts(2,i) Inf]);
+        while true
+            switch_pts(1,i+1)=temp;
+            temp=vpasolve(v1==X_1(1),t,[switch_pts(2,i) switch_pts(1,i+1)-1e-5]);
+            if isempty(temp)
+                break;
+            end
+        end
+    figure(1);fplot3(v1,v2,v3,[switch_pts(2,i) switch_pts(1,i+1)],'Color','k','LineWidth',1)
+    figure(2); hold on;
+    fplot(v1,[switch_pts(2,i) switch_pts(1,i+1)],'Color','k','LineWidth',1);
+    line(X_1(1),[switch_pts(2,i) switch_pts(1,i+1)]);line(X_2(1),[switch_pts(2,i) switch_pts(1,i+1)]);
+    plot(switch_pts(1,i+1),X_1(1),'-o','Color','k','MarkerSize',6,'MarkerFaceColor','#709494');
+    hold off;
+    
+end
+
+end
+
+
