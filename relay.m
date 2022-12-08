@@ -58,7 +58,8 @@ for i=1:(cycle_n)
            break;
        end
     end
-    figure(1);fplot3(u1,u2,u3,[switch_pts(1,i) switch_pts(2,i)],'Color','k','LineWidth',1);
+    d = switch_pts(1,i):0.01:switch_pts(2,i);
+    figure(1);plot(d,u1(d),u2(d),u3(d),'Color','k','LineWidth',1);
     figure(2); hold on ;fplot(u1,[switch_pts(1,i) switch_pts(2,i)],'Color','k','LineWidth',1);
     line(X_2(1),[switch_pts(1,i) switch_pts(2,i)]);line(X_1(1),[switch_pts(1,i) switch_pts(2,i)]);
     plot(switch_pts(1,i),X_1(1),'-o','Color','k','MarkerSize',6,'MarkerFaceColor','#709494');
